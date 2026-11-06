@@ -101,6 +101,9 @@
   let mapPage=0;
   let modalFocus=null;
   let toastTimer;
+  let nextQuestionTimer;
+  let questionSwipe=null;
+  let swipeClickUntil=0;
   let reportId=null;
   let flashIds=[];
   let flashIndex=0;
@@ -197,6 +200,7 @@
     document.body.classList.toggle('show-study-filters',!!state.ui.studyFiltersOpen);
   }
   function render() {
+    clearTimeout(nextQuestionTimer);
     renderNavigation();
     const screens={study:renderStudy,knowledge:renderKnowledge,public:renderPublicBank,exam:renderExam,records:renderRecords,report:renderReport};
     main.innerHTML=screens[route]();
@@ -236,7 +240,7 @@
       const correct=question.answer.includes(option.id);
       const status=showAnswer?(correct?'correct':chosen?'wrong':''):(chosen?'selected':'');
       return button('select-option',`${question.type==='判断'?'':`<span class="option-letter">${option.id}</span>`}<span class="option-text">${e(option.text)}</span>${showAnswer&&correct?icon('check'):showAnswer&&chosen?icon('close'):''}`,`option ${status}`,`data-id="${option.id}" aria-pressed="${chosen}" ${showAnswer?'disabled':''}`);
-    }).join('')}</div>${!showAnswer?`<div class="answer-actions"><label class="check"><input id="guess-answer" type="checkbox" ${queue.guesses?.[question.id]?'checked':''}>这题我是猜的</label>${exam?'<span class="tiny muted">已自动保存选择</span>':button('submit-answer','提交答案','btn',selected.length?'':'disabled')}</div>`:''}${showAnswer?`<section class="explanation"><div class="answer-heading ${response&&!response.correct?'wrong':''}">${icon(response&&!response.correct?'refresh':'check')}<strong>${memory?'答案与解析':response.correct?'答对了':'本题答错'}</strong><span>答案 ${answerLabel(question)}</span></div><p>${e(question.explanation)}</p></section>`:''}${!exam&&related.length?`<div class="related" aria-label="相关知识点">${related.map(section=>button('open-section',`${icon('book')}${e(section.title)}`,'',`data-id="${section.id}"`)).join('')}</div>`:!exam&&question.concepts?.length?`<div class="related">${question.concepts.slice(0,3).map(id=>conceptById.get(id)).filter(Boolean).map(concept=>button('concept',`${icon('book')}${e(concept.title)}`,'',`data-id="${concept.id}"`)).join('')}</div>`:''}${!exam?renderQuestionSources(question):''}</article>`;
+    }).join('')}</div>${!showAnswer?`<div class="answer-actions"><label class="check"><input id="guess-answer" type="checkbox" ${queue.guesses?.[question.id]?'checked':''}>这题我是猜的</label>${exam?'<span class="tiny muted">已自动保存选择</span>':question.type==='多选'?button('submit-answer','提交答案','btn',selected.length?'':'disabled'):''}</div>`:''}${showAnswer?`<section class="explanation"><div class="answer-heading ${response&&!response.correct?'wrong':''}">${icon(response&&!response.correct?'refresh':'check')}<strong>${memory?'答案与解析':response.correct?'答对了':'本题答错'}</strong><span>答案 ${answerLabel(question)}</span></div><p>${e(question.explanation)}</p></section>`:''}${!exam&&related.length?`<div class="related" aria-label="相关知识点">${related.map(section=>button('open-section',`${icon('book')}${e(section.title)}`,'',`data-id="${section.id}"`)).join('')}</div>`:!exam&&question.concepts?.length?`<div class="related">${question.concepts.slice(0,3).map(id=>conceptById.get(id)).filter(Boolean).map(concept=>button('concept',`${icon('book')}${e(concept.title)}`,'',`data-id="${concept.id}"`)).join('')}</div>`:''}${!exam?renderQuestionSources(question):''}</article>`;
   }
   function answerLabel(question) {return question.type==='判断'?(question.answer[0]==='T'?'正确':'错误'):[...question.answer].sort().join('、');}
   function recordAnswer(question,selected,guessed,mode,requestedBank=state.study.bank) {
@@ -261,8 +265,16 @@
     const queue=ensureQueue();const question=currentStudyQuestion();
     const selected=queue.selections[question.id]||[];
     if(!selected.length||queue.answers[question.id])return;
-    queue.answers[question.id]=recordAnswer(question,selected,queue.guesses[question.id],'practice');
-    queue.updated=Date.now();save();render();
+    const response=recordAnswer(question,selected,queue.guesses[question.id],'practice');
+    queue.answers[question.id]=response;
+    queue.updated=Date.now();
+    const saved=save();
+    render();
+    if(!saved||!response.correct||queue.index===queue.ids.length-1)return;
+    const index=queue.index;
+    nextQuestionTimer=setTimeout(()=>{
+      if(route==='study'&&state.study.mode==='practice'&&!overlayRoot.firstChild&&ensureQueue()===queue&&queue.index===index)moveQuestion(index+1);
+    },250);
   }
   function moveQuestion(index) {
     const queue=activeQueue();
@@ -374,9 +386,9 @@
     const wrong=pool.filter(question=>state.marks[markKey(question.id,bank)]?.pending);
     const start=(label,classes,attributes='')=>button('public-start',label,classes,`data-bank="${bank}" data-year="${bank==='past'?year:'all'}" ${attributes}`);
     const tabs=`<div class="record-bank segmented">${button('public-view','历年练习',bank==='past'?'active':'','data-value="past"')}${button('public-view','公开补充',bank==='public'?'active':'','data-value="public"')}</div>`;
-    const years=bank==='past'?`<div class="pills mt">${button('past-year','全部',year==='all'?'pill active':'pill','data-value="all"')}${(DATA.pastCollections||[]).map(item=>button('past-year',`${e(item.label)} · ${item.ids.length}`,year===item.id?'pill active':'pill',`data-value="${item.id}"`)).join('')}</div>`:'';
+    const years=bank==='past'?`<div class="pills">${button('past-year','全部',year==='all'?'pill active':'pill','data-value="all"')}${(DATA.pastCollections||[]).map(item=>button('past-year',`${e(item.label)} · ${item.ids.length}`,year===item.id?'pill active':'pill',`data-value="${item.id}"`)).join('')}</div>`:'';
     const audit=DATA.publicBank||{};
-    return `${title(bankNames[bank])}${tabs}${years}
+    return `${title(bankNames[bank])}<section class="bank-content">${tabs}${years}
       <div class="record-stats">
         <div class="record-stat"><p>可练题目</p><strong>${pool.length}</strong></div>
         <div class="record-stat"><p>已练习</p><strong>${pool.filter(question=>seen.has(question.id)).length}</strong></div>
@@ -395,7 +407,7 @@
         return `<div class="topic-row">${icon(topic.icon)}<span><h3>${topic.name}</h3><p>${count} 题</p></span><span class="actions">${start('背题','btn soft small',`data-topic="${topic.id}" data-mode="memory"`)}${start('刷题','btn secondary small',`data-topic="${topic.id}" data-mode="practice"`)}</span></div>`;
       }).join('')}</div>
       <details class="bank-sources"><summary>来源与去重记录</summary>${bank==='past'?`<p>公开资料对应题沿用原题号，考点改编题单独编号。题目同时进入相关知识点练习。</p>${(DATA.pastCollections||[]).map(item=>`<a href="${e(item.url)}" target="_blank" rel="noopener noreferrer">${e(item.label)} · ${e(item.kind)}</a>`).join('')}`:`<p>整理 ${audit.candidates||pool.length} 道，合并重复题 ${audit.duplicates||0} 道，新增 ${audit.added||0} 道。公开样题与练习均按各自出处标注。</p>${(audit.sources||[]).map(source=>`<a href="${e(source.url)}" target="_blank" rel="noopener noreferrer">${e(source.title)}</a>`).join('')}`}</details>
-      <div class="section-title"><h3>题目目录</h3></div><div class="question-list">${pool.map(question=>renderQuestionRow(question)).join('')}</div>`;
+      <div class="section-title"><h3>题目目录</h3></div><div class="question-list">${pool.map(question=>renderQuestionRow(question)).join('')}</div></section>`;
   }
   function renderQuestionSources(question) {
     const references=[...(question.pastReferences||[]),...(question.publicReferences||[])];
@@ -530,6 +542,7 @@
   }
   document.addEventListener('click',event=>{
     const target=event.target.closest('[data-action]');if(!target||target.disabled)return;
+    if(Date.now()<swipeClickUntil){event.preventDefault();return;}
     const action=target.dataset.action;const id=target.dataset.id;const value=target.dataset.value;
     switch(action) {
       case 'close-modal':closeModal();break;
@@ -561,6 +574,7 @@
         if(!exam&&(state.study.mode==='memory'||queue.answers[question.id]))return;
         const selected=answers[question.id]||[];
         answers[question.id]=question.type==='多选'?(selected.includes(id)?selected.filter(option=>option!==id):[...selected,id]):[id];
+        if(!exam&&question.type!=='多选'){submitAnswer();break;}
         queue.updated=Date.now();save();render();break;
       }
       case 'submit-answer':submitAnswer();break;
@@ -650,6 +664,30 @@
       case 'install':if(installEvent){installEvent.prompt();installEvent=null;}else toast('请在浏览器菜单或分享菜单中选择“添加到主屏幕”。');break;
     }
   });
+  document.addEventListener('pointerdown',event=>{
+    if(event.pointerType==='mouse')return;
+    swipeClickUntil=0;
+    questionSwipe=null;
+    if(!event.isPrimary||overlayRoot.firstChild||!(route==='study'||route==='exam'&&state.activeExam))return;
+    const question=event.target.closest('.question');
+    if(!question||!main.contains(question)||event.target.closest('a,input,select,textarea,summary,[data-action]:not([data-action="select-option"])'))return;
+    clearTimeout(nextQuestionTimer);
+    const queue=activeQueue();
+    questionSwipe={pointer:event.pointerId,x:event.clientX,y:event.clientY,time:Date.now(),queue,index:queue.index};
+  });
+  document.addEventListener('pointerup',event=>{
+    const swipe=questionSwipe;
+    questionSwipe=null;
+    if(!swipe||swipe.pointer!==event.pointerId||overlayRoot.firstChild||!(route==='study'||route==='exam'&&state.activeExam))return;
+    const horizontal=event.clientX-swipe.x;
+    const vertical=event.clientY-swipe.y;
+    if(Date.now()-swipe.time>1200||Math.abs(horizontal)<65||Math.abs(horizontal)<Math.abs(vertical)*1.6)return;
+    if(activeQueue()!==swipe.queue||swipe.queue.index!==swipe.index)return;
+    swipeClickUntil=Date.now()+400;
+    event.preventDefault();
+    moveQuestion(swipe.index+(horizontal<0?1:-1));
+  });
+  document.addEventListener('pointercancel',()=>{questionSwipe=null;});
   document.addEventListener('input',event=>{if(event.target.id==='global-search')searchAll(event.target.value);});
   document.addEventListener('change',event=>{
     const target=event.target;
