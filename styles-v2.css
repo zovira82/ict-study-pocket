@@ -1,12 +1,12 @@
 :root {
   font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   color: #202c29;
-  background: #f7f8f8;
+  background: #f5faf8;
   font-synthesis: none;
-  --green: #12695c;
-  --light: #edf5f1;
-  --line: #e4e9e6;
-  --muted: #7a8780;
+  --green: #087f6c;
+  --light: #e7f6ef;
+  --line: #dcebe4;
+  --muted: #6d8278;
   --red: #b44740;
 }
 * { box-sizing: border-box; }
@@ -54,7 +54,7 @@ p { line-height: 1.85; }
 .icon-btn.active { color: var(--green); background: var(--light); }
 .icon-btn.saved { color: #a47737; background: #fbf4e8; }
 .btn { min-height: 44px; padding: 11px 19px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9px; font-size: 14px; font-weight: 550; color: white; background: var(--green); }
-.btn:hover { background: #0d5a4e; }
+.btn:hover { background: #086956; }
 .btn svg { width: 18px; height: 18px; }
 .btn.secondary { color: var(--green); border: 1px solid #ceded4; background: white; }
 .btn.soft { color: var(--green); background: var(--light); }
@@ -62,10 +62,10 @@ p { line-height: 1.85; }
 .btn.small { min-height: 38px; padding: 8px 13px; font-size: 12px; }
 .text-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--green); font-size: 13px; min-height: 38px; padding: 6px 3px; }
 .text-btn svg { width: 15px; height: 15px; }
-.segmented { background: #eaf0ec; border-radius: 10px; padding: 4px; display: inline-flex; gap: 3px; }
+.segmented { background: #e5f2ec; border-radius: 10px; padding: 4px; display: inline-flex; gap: 3px; }
 .segmented button { min-width: 86px; padding: 9px 18px; border-radius: 7px; color: #7a897d; font-size: 14px; }
 .segmented button.active { background: white; color: var(--green); box-shadow: 0 1px 4px #1c3c2510; font-weight: 600; }
-.study-top { position: sticky; top: 0; background: #f7f8f8f5; backdrop-filter: blur(12px); z-index: 15; padding-bottom: 13px; }
+.study-top { position: sticky; top: 0; background: #f5faf8f5; backdrop-filter: blur(12px); z-index: 15; padding-bottom: 13px; }
 .study-top .toolbar { display: flex; align-items: center; gap: 10px; }
 .study-top .count { margin-left: auto; font-size: 12px; color: #859186; }
 .study-filters { display: flex; gap: 9px; margin-top: 15px; }
@@ -73,7 +73,7 @@ p { line-height: 1.85; }
 select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #526658; padding: 9px 28px 9px 12px; font-size: 12px; max-width: 100%; }
 .study-filters select { flex: 1; min-width: 0; }
 .progress { background: #e6ece7; height: 3px; border-radius: 4px; overflow: hidden; margin-top: 17px; }
-.progress i { display: block; height: 100%; border-radius: 4px; background: #80a88e; }
+.progress i { display: block; height: 100%; border-radius: 4px; background: #32a68c; }
 .question { background: white; border: 1px solid var(--line); border-radius: 15px; padding: 28px; margin-top: 5px; touch-action: pan-y pinch-zoom; }
 .question-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: #8a968c; font-size: 11px; }
 .tag { border-radius: 5px; padding: 4px 7px; color: var(--green); background: var(--light); font-size: 11px; }
@@ -86,11 +86,11 @@ select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; ba
 .option { display: flex; align-items: flex-start; gap: 12px; text-align: left; border: 1px solid #e1e7e2; border-radius: 10px; padding: 14px 16px; width: 100%; background: white; font-size: 15px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
 .option-letter { display: inline-grid; place-items: center; height: 26px; width: 26px; flex: none; border: 1px solid #dce5dd; border-radius: 6px; font-size: 12px; color: #869582; }
 .option-text { flex: 1; min-width: 0; }
-.option.selected { background: #f0f7f1; border-color: #9cbea5; }
+.option.selected { background: #edf9f1; border-color: #8cc6ab; }
 .option.selected .option-letter { background: var(--green); color: white; border-color: var(--green); }
-.option.correct { background: #f0f7f1; border-color: #9cbea5; }
-.option.correct .option-letter { background: #739780; color: white; border-color: #739780; }
-.option.wrong { background: #fcf1ef; border-color: #dfb1a7; }
+.option.correct { background: #edf9f1; border-color: #8cc6ab; }
+.option.correct .option-letter { background: #25805d; color: white; border-color: #739780; }
+.option.wrong { background: #fff0ed; border-color: #dfaca1; }
 .option.wrong .option-letter { background: #b86958; color: white; border-color: #b86958; }
 .option:disabled { opacity: 1; }
 .option svg { align-self: center; width: 17px; height: 17px; }
@@ -165,7 +165,7 @@ select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; ba
 .topic-list { border: 1px solid var(--line); border-radius: 13px; overflow: hidden; background: white; margin-top: 21px; }
 .topic-row { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 21px 22px; border-bottom: 1px solid var(--line); }
 .topic-row:last-child { border-bottom: 0; }
-.topic-row>svg { color: #8ba084; width: 23px; height: 23px; }
+.topic-row>svg { color: #729d89; width: 23px; height: 23px; }
 .topic-row h3 { font-size: 14px; margin-bottom: 7px; }
 .topic-row p { color: #99a28e; font-size: 11px; }
 .topic-row .actions { display: flex; gap: 8px; margin-left: auto; }
@@ -256,7 +256,7 @@ select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; ba
 .font-large .question-stem { font-size: 21px; }
 .font-large .option, .font-large .explanation p, .font-large .note-body>p { font-size: 17px; }
 @media (max-width: 700px) {
-  :root { background: #fafbfa; }
+  :root { background: #f7fbf9; }
   .app-header { height: 57px; }
   .header-inner { padding: 0 19px; gap: 11px; }
   .brand span { font-size: 19px; }
@@ -269,7 +269,7 @@ select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; ba
   .bottom-nav a svg { width: 21px; height: 21px; }
   .bottom-nav a.active { color: var(--green); }
   .public-actions { grid-template-columns: 1fr 1fr; }
-  .study-top { padding-bottom: 10px; background: #fafbfaf5; }
+  .study-top { padding-bottom: 10px; background: #f7fbf9f5; }
   .segmented button { min-width: 73px; padding: 8px 16px; font-size: 13px; }
   .study-top .count { font-size: 11px; }
   .icon-btn { width: 39px; height: 39px; }

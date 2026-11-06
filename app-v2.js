@@ -400,7 +400,7 @@
         ${start('随机刷题','btn secondary','data-mode="practice" data-order="random"')}
         ${start('错题练习','btn secondary','data-mode="practice" data-order="wrong"')}
       </div>
-      <p class="bank-description">${bank==='past'?'公开回忆与讲师讲解题，另含考点改编。':'公开样题与练习，已与原题库去重。'}</p>
+      <p class="bank-description">${bank==='past'?'公开回忆考点与讲师讲解，含关联练习。':'公开样题与练习，已与原题库去重。'}</p>
       <div class="topic-list">${topics.map(topic=>{
         const count=pool.filter(question=>question.topic===topic.id).length;
         if(!count)return '';
