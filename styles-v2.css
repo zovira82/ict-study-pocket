@@ -469,3 +469,7 @@ body.notebook-open { overflow: hidden; }
 .notebook-toggle { font-size: 12px; min-width: 30px; flex: none; }
 
 .explanation p { white-space: pre-line; }
+.explanation .quick-explanation { color: #304f44; line-height: 1.65; }
+.explanation-details { margin-top: 10px; }
+.explanation-details summary { width: fit-content; padding: 6px 0; color: var(--green); font-size: 13px; cursor: pointer; }
+.explanation-details p { margin-top: 8px; line-height: 1.75; }
