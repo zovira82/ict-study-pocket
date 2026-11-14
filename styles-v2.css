@@ -467,3 +467,5 @@ body.notebook-open { overflow: hidden; }
 .notebook-page .notebook-heading { display: none; }
 
 .notebook-toggle { font-size: 12px; min-width: 30px; flex: none; }
+
+.explanation p { white-space: pre-line; }

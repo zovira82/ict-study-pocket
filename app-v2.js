@@ -89,7 +89,44 @@
     }
     result.notebook=typeof saved.notebook==='string'?saved.notebook:'';
     delete result.session;
+    updateCorrectedAnswers(result);
     return result;
+  }
+  function updateCorrectedAnswers(saved, force=false) {
+    if(!DATA.answerUpdateVersion||(!force&&saved.answerUpdateVersion===DATA.answerUpdateVersion))return;
+    const changed=new Set(DATA.answerUpdateIds||[]);
+    const marks=new Map();
+    for(const attempt of [...saved.attempts].sort((left,right)=>left.time-right.time)){
+      if(!changed.has(attempt.question))continue;
+      const question=questionById.get(attempt.question);
+      if(!question||!Array.isArray(attempt.selected))continue;
+      attempt.correct=sameAnswer(attempt.selected,question.answer);
+      const bank=attempt.bank||'original';
+      const key=bank==='original'?question.id:`${bank}|${question.id}`;
+      const mark=marks.get(key)||{pending:false,failures:0,streak:0,lastPassDay:''};
+      if(!attempt.correct||attempt.guessed){
+        mark.pending=true;mark.streak=0;mark.lastError=attempt.time;
+        if(!attempt.correct)mark.failures++;
+      }else if(mark.pending&&mark.lastPassDay!==today(attempt.time)&&today(mark.lastError)!==today(attempt.time)){
+        mark.streak++;mark.lastPassDay=today(attempt.time);
+        if(mark.streak>=2)mark.pending=false;
+      }
+      mark.updated=attempt.time;marks.set(key,mark);
+    }
+    for(const [key,mark] of marks)saved.marks[key]=mark;
+    const updateAnswer=(id,answer)=>{
+      if(changed.has(id)&&questionById.has(id)&&Array.isArray(answer?.selected))answer.correct=sameAnswer(answer.selected,questionById.get(id).answer);
+    };
+    for(const queue of Object.values(saved.queues||{})){
+      for(const [id,answer] of Object.entries(queue.answers||{}))updateAnswer(id,answer);
+    }
+    for(const report of saved.history||[]){
+      if(!Array.isArray(report.ids)||!report.answers)continue;
+      for(const [id,answer] of Object.entries(report.answers))updateAnswer(id,answer);
+      report.correct=report.ids.filter(id=>report.answers[id]?.correct).length;
+      report.score=report.ids.length?Math.round(report.correct/report.ids.length*100):0;
+    }
+    saved.answerUpdateVersion=DATA.answerUpdateVersion;
   }
   function loadState() {
     try {return normalizeState(JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'));}
@@ -556,6 +593,7 @@
         const exam={...incoming.session,answers:incoming.session.selections||{},guesses:incoming.session.guesses||{},flags:incoming.session.flags||{}};
         if(validExam(exam))candidate.activeExam=exam;
       }
+      updateCorrectedAnswers(candidate,true);
       const original=state;state=candidate;
       if(save()){render();toast('备份已合并。');}else state=original;
     } catch {toast('导入失败，请选择知序导出的备份文件。');}
