@@ -406,3 +406,29 @@ select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; ba
   .memory-study.font-large .question-stem { font-size: 20px; }
   .memory-study.font-large .option, .memory-study.font-large .explanation p { font-size: 17px; }
 }
+
+.ai-entry { margin-top: 12px; min-height: 38px; padding: 7px 14px; }
+.ai-modal { width: min(640px, 100%); }
+.ai-tutor { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ai-tutor details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.ai-tutor summary { cursor: pointer; font-size: 13px; color: var(--green); }
+.ai-question p { font-size: 14px; line-height: 1.65; margin: 8px 0; }
+.ai-question pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-label { display: grid; gap: 6px; font-size: 13px; margin: 12px 0; }
+.ai-label input, .ai-label select, #ai-input { width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: white; font: inherit; }
+#ai-input { resize: vertical; font-size: 16px; }
+.ai-messages { max-height: 40dvh; overflow: auto; overscroll-behavior: contain; }
+.ai-message { padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #f3f7f5; }
+.ai-message.user { background: var(--light); }
+.ai-message div { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.75; margin-top: 4px; }
+.ai-quick, .ai-config-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ai-config-actions > span { flex: 1; min-width: 120px; }
+.ai-config-actions { justify-content: flex-end; }
+.ai-error { color: #a23f30; font-size: 14px; }
+.ai-tutor [hidden] { display: none; }
+@media(max-width: 600px) {
+ .ai-modal { padding: 16px; max-height: 92dvh; }
+ .ai-quick .pill { min-height: 38px; padding: 7px 10px; font-size: 12px; }
+}
+
+.ai-tutor .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
