@@ -1,5 +1,5 @@
-const CACHE = 'zhixu-ict-v7';
-const FILES = ['./','./index.html','./styles-v2.css?v=7','./app-v2.js?v=7','./data.js?v=7','./ai-tutor.js?v=7','./icon.svg','./icon-192.png','./icon-512.png','./mobile-qr.svg','./manifest.webmanifest'];
+const CACHE = 'zhixu-ict-v8';
+const FILES = ['./','./index.html','./styles-v2.css?v=8','./app-v2.js?v=8','./data.js?v=8','./ai-tutor.js?v=8','./icon.svg','./icon-192.png','./icon-512.png','./mobile-qr.svg','./manifest.webmanifest'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
   self.skipWaiting();

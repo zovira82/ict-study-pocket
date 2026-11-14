@@ -66,7 +66,7 @@
   }
   function defaults() {
     return {
-      version:1, attempts:[], marks:{}, cards:{}, notes:{}, favorites:[], publicFavorites:[], pastFavorites:[], history:[],
+      version:1, attempts:[], marks:{}, cards:{}, notes:{}, notebook:'', favorites:[], publicFavorites:[], pastFavorites:[], history:[],
       queues:{}, activeExam:null,
       study:{topic:'all',type:'all',order:'sequential',mode:'memory',section:null,bank:'original'},
       ui:{chapter:'foundation',knowledgeView:'notes',openSection:null,recordBank:'original',studyFiltersOpen:false,publicView:'past',pastYear:'all'},
@@ -87,6 +87,7 @@
       result.queues['all|all|sequential|']={ids,index:Math.max(0,ids.indexOf(current)),answers:saved.session.answers||{},selections:saved.session.selections||{},guesses:saved.session.guesses||{},viewed:{},updated:Date.now()};
       result.study.mode=saved.session.memory?'memory':'practice';
     }
+    result.notebook=typeof saved.notebook==='string'?saved.notebook:'';
     delete result.session;
     return result;
   }
@@ -188,23 +189,24 @@
     const value=location.hash.slice(1);
     if(['public-practice','past-practice'].includes(value)){state.study.bank=value.split('-')[0];return 'study';}
     if(value==='study'||value==='home')state.study.bank='original';
-    return ({home:'study',practice:'study',session:'study',profile:'records',review:'records',result:'report'})[value]||(['study','knowledge','public','exam','records','report'].includes(value)?value:'study');
+    return ({home:'study',practice:'study',session:'study',profile:'records',review:'records',result:'report'})[value]||(['study','knowledge','public','exam','records','report','notebook'].includes(value)?value:'study');
   }
   function renderNavigation() {
-    const active=route==='report'?'exam':route==='study'&&['public','past'].includes(state.study.bank)?'public':route;
+    const active=route==='notebook'?'records':route==='report'?'exam':route==='study'&&['public','past'].includes(state.study.bank)?'public':route;
     const links=navItems.map(([id,name,label])=>`<a href="#${id}" class="${active===id?'active':''}" ${active===id?'aria-current="page"':''}>${label}</a>`).join('');
     document.getElementById('app-header').innerHTML=`<div class="header-inner"><a class="brand" href="#study">${icon('book')}<span>知序</span></a><span class="app-subtitle">ICT 网络赛道</span><nav class="desktop-nav" aria-label="主要导航">${links}</nav></div>`;
     document.getElementById('bottomnav').innerHTML=navItems.map(([id,name,label])=>`<a href="#${id}" class="${active===id?'active':''}" ${active===id?'aria-current="page"':''}>${icon(name)}<span>${label}</span></a>`).join('');
     document.body.classList.toggle('font-large',state.settings.font==='large');
     document.body.classList.toggle('memory-study',route==='study'&&state.study.mode==='memory');
     document.body.classList.toggle('show-study-filters',!!state.ui.studyFiltersOpen);
+    document.body.classList.toggle('notebook-open',route==='study'&&!!state.ui.notebookOpen);
   }
   function render() {
     clearTimeout(nextQuestionTimer);
     renderNavigation();
-    const screens={study:renderStudy,knowledge:renderKnowledge,public:renderPublicBank,exam:renderExam,records:renderRecords,report:renderReport};
+    const screens={study:renderStudy,knowledge:renderKnowledge,public:renderPublicBank,exam:renderExam,records:renderRecords,report:renderReport,notebook:renderNotebook};
     main.innerHTML=screens[route]();
-    document.title=`${navItems.find(item=>item[0]===route)?.[2]||'考试结果'} · 知序`;
+    document.title=`${navItems.find(item=>item[0]===route)?.[2]||(route==='notebook'?'学习笔记':'考试结果')} · 知序`;
   }
   function title(text,extra='') {
     return `<div class="page-title"><h1>${text}</h1><div class="row">${extra}${button('search',icon('search'),'icon-btn','aria-label="搜索题目和知识"')}</div></div>`;
@@ -223,7 +225,7 @@
       queue.viewed[question.id]=Date.now();queue.updated=Date.now();save();
     }
     const section=sectionById.get(settings.section);
-    return `<section class="study-top">${settings.bank!=="original"&&settings.bank!=="all"?`<div class="study-bank-title"><span>${bankNames[settings.bank]}</span>${button("public-home","题库目录","text-btn")}</div>`:""}<div class="toolbar"><div class="segmented" aria-label="学习方式">${button('study-mode','背题',settings.mode==='memory'?'active':'','data-value="memory" aria-pressed="'+(settings.mode==='memory')+'"')}${button('study-mode','刷题',settings.mode==='practice'?'active':'','data-value="practice" aria-pressed="'+(settings.mode==='practice')+'"')}</div><span class="count">${queue.ids.length?`${queue.index+1} / ${queue.ids.length}`:'0 题'}</span>${button('search',icon('search'),'icon-btn','aria-label="搜索题目和知识"')}${button('study-filters-toggle',icon('settings'),'icon-btn compact-filter-toggle','aria-label="展开或收起筛选" aria-expanded="'+!!state.ui.studyFiltersOpen+'"')}${button('answer-map',icon('grid'),'icon-btn','aria-label="打开答题卡"')}</div><div class="study-filters"><select id="study-topic" aria-label="知识范围">${topicOptions(settings.topic)}${settings.section?`<option value="section" selected>${e(section?.title||settings.label||"专项练习")}</option>`:''}</select><select id="study-type" aria-label="题型">${[['all','全部题型'],['单选','单选题'],['多选','多选题'],['判断','判断题']].map(([id,label])=>`<option value="${id}" ${settings.type===id?'selected':''}>${label}</option>`).join('')}</select><select id="study-order" aria-label="练习顺序">${[['sequential','顺序'],['random','随机'],['unseen','未做题'],['wrong','错题顺序'],['wrong-random','错题随机'],['favorites','收藏']].map(([id,label])=>`<option value="${id}" ${settings.order===id?'selected':''}>${label}</option>`).join('')}</select></div><div class="progress"><i style="width:${queue.ids.length?(queue.index+1)/queue.ids.length*100:0}%"></i></div></section>${question?`${renderQuestion(question,queue,false)}<div class="question-footer">${button('previous',`${icon('back')} 上一题`,'btn secondary',queue.index===0?'disabled':'')}${button('study-settings',icon('settings'),'icon-btn','aria-label="练习设置与重置"')}${button('next',`下一题 ${icon('arrow')}`,'btn',queue.index===queue.ids.length-1?'disabled':'')}</div>`:empty('当前范围没有题目','all-questions','返回全部题目')}`;
+    return `<section class="study-top">${settings.bank!=="original"&&settings.bank!=="all"?`<div class="study-bank-title"><span>${bankNames[settings.bank]}</span>${button("public-home","题库目录","text-btn")}</div>`:""}<div class="toolbar"><div class="segmented" aria-label="学习方式">${button('study-mode','背题',settings.mode==='memory'?'active':'','data-value="memory" aria-pressed="'+(settings.mode==='memory')+'"')}${button('study-mode','刷题',settings.mode==='practice'?'active':'','data-value="practice" aria-pressed="'+(settings.mode==='practice')+'"')}</div><span class="count">${queue.ids.length?`${queue.index+1} / ${queue.ids.length}`:'0 题'}</span>${button('notebook-toggle','笔记','text-btn notebook-toggle','aria-label="学习笔记" aria-expanded="'+!!state.ui.notebookOpen+'"')}${button('search',icon('search'),'icon-btn','aria-label="搜索题目和知识"')}${button('study-filters-toggle',icon('settings'),'icon-btn compact-filter-toggle','aria-label="展开或收起筛选" aria-expanded="'+!!state.ui.studyFiltersOpen+'"')}${button('answer-map',icon('grid'),'icon-btn','aria-label="打开答题卡"')}</div><div class="study-filters"><select id="study-topic" aria-label="知识范围">${topicOptions(settings.topic)}${settings.section?`<option value="section" selected>${e(section?.title||settings.label||"专项练习")}</option>`:''}</select><select id="study-type" aria-label="题型">${[['all','全部题型'],['单选','单选题'],['多选','多选题'],['判断','判断题']].map(([id,label])=>`<option value="${id}" ${settings.type===id?'selected':''}>${label}</option>`).join('')}</select><select id="study-order" aria-label="练习顺序">${[['sequential','顺序'],['random','随机'],['unseen','未做题'],['wrong','错题顺序'],['wrong-random','错题随机'],['favorites','收藏']].map(([id,label])=>`<option value="${id}" ${settings.order===id?'selected':''}>${label}</option>`).join('')}</select></div><div class="progress"><i style="width:${queue.ids.length?(queue.index+1)/queue.ids.length*100:0}%"></i></div></section>${question?`<div class="study-workspace"><div class="study-question-column"><div class="study-question-pane">${renderQuestion(question,queue,false)}</div><div class="question-footer">${button('previous',`${icon('back')} 上一题`,'btn secondary',queue.index===0?'disabled':'')}${button('study-settings',icon('settings'),'icon-btn','aria-label="练习设置与重置"')}${button('next',`下一题 ${icon('arrow')}`,'btn',queue.index===queue.ids.length-1?'disabled':'')}</div></div>${state.ui.notebookOpen?renderNotebookPanel():''}</div>`:empty('当前范围没有题目','all-questions','返回全部题目')}`;
   }
   function relatedSections(question) {
     const ids=question.sections||[];
@@ -428,12 +430,30 @@
       <div class="record-stats">${[['已做题目',seenIds(bank).size],['作答正确率',accuracy],['待复习错题',wrong.length]].map(([label,value])=>`<div class="record-stat"><p>${label}</p><strong>${value}</strong></div>`).join('')}</div>
       <div class="settings">
         <div class="setting-row"><span><h3>答题字号</h3></span><select id="font-size" aria-label="答题字号"><option value="normal" ${state.settings.font==='normal'?'selected':''}>标准</option><option value="large" ${state.settings.font==='large'?'selected':''}>大字</option></select></div>
+        <div class="setting-row"><span><h3>学习笔记</h3></span>${button('notebook-all','全部笔记','btn soft small')}</div>
         <div class="setting-row"><span><h3>学习备份</h3><p>保存在当前浏览器，更换设备可导入</p></span><div class="row">${button('export','导出','btn soft small')}${button('import','导入','btn secondary small')}<input type="file" id="import-file" accept="application/json,.json" hidden></div></div>
         <div class="setting-row"><span><h3>手机使用</h3><p>浏览器打开，可保存到桌面</p></span>${button('mobile','打开方式','btn soft small')}</div>
         <div class="setting-row"><span><h3>记录管理</h3><p>重置进度、清空错题或全部记录</p></span>${button('record-settings','管理','btn secondary small')}</div>
       </div>
       <div class="collection-tabs">${[['wrong',`错题 ${wrong.length}`],['favorites',`收藏 ${favorites.length}`],['notes',`笔记 ${notes.length}`]].map(([id,label])=>button('collection',label,`pill ${collection===id?'active':''}`,`data-value="${id}"`)).join('')}<span class="spacer"></span>${list.length?button('collection-study','练习','text-btn'):''}</div>
       ${list.length?`<div class="question-list">${list.slice(0,collectionLimit).map(question=>renderQuestionRow(question,collection==='notes'?state.notes[question.id]:'')).join('')}</div>${list.length>collectionLimit?button('more-collection','查看更多','btn soft wide mt'):''}`:'<p class="small muted">暂无记录</p>'}`;
+  }
+  function renderNotebookPanel(fullPage=false) {
+    return `<aside class="learning-notebook" aria-label="学习笔记栏">
+      <div class="notebook-heading"><h2>学习笔记</h2><span class="spacer"></span>
+        ${fullPage?'':button('notebook-all','全部笔记','text-btn')}
+        ${fullPage?'':button('notebook-close',icon('close'),'icon-btn','aria-label="收起学习笔记"')}
+      </div>
+      <textarea id="learning-notebook" aria-label="学习笔记内容" placeholder="写下自己的理解和记忆方法">${e(state.notebook)}</textarea>
+      <span id="notebook-status" class="tiny muted" role="status">自动保存</span>
+    </aside>`;
+  }
+  function renderNotebook() {
+    const questionNotes=questions.filter(question=>state.notes[question.id]);
+    return `${title('学习笔记',button('notebook-back','返回背题','text-btn'))}
+      <section class="notebook-page">${renderNotebookPanel(true)}</section>
+      ${questionNotes.length?`<h2 class="mt">题目笔记</h2><div class="notebook-question-notes">${questionNotes.map(question=>`
+        <section class="notebook-note"><button type="button" data-action="jump-id" data-id="${question.id}" class="notebook-question-link">${e(question.id)} · ${e(question.stem)}</button><p>${e(state.notes[question.id])}</p></section>`).join('')}</div>`:''}`;
   }
   function renderQuestionRow(question,note='') {
     return button('jump-id',`<span class="qid">${question.id}</span><span class="question-text">${e(question.stem)}<small>${question.type}题 · ${topicName(question.topic)}</small>${note?`<small>${e(note)}</small>`:''}</span>${icon('chevron')}`,'question-row',`data-id="${question.id}"`);
@@ -519,6 +539,9 @@
       candidate.favorites=[...new Set([...candidate.favorites,...incoming.favorites.filter(id=>questionById.has(id))])];
       candidate.publicFavorites=[...new Set([...candidate.publicFavorites,...(incoming.publicFavorites||[]).filter(id=>publicIds.has(id))])];
       candidate.pastFavorites=[...new Set([...candidate.pastFavorites,...(incoming.pastFavorites||[]).filter(id=>pastIds.has(id))])];
+      if(typeof incoming.notebook==='string'&&incoming.notebook.trim()&&!candidate.notebook.includes(incoming.notebook)){
+        candidate.notebook=[candidate.notebook,incoming.notebook].filter(Boolean).join('\n\n');
+      }
       for(const [id,note] of Object.entries(incoming.notes||{}))if(questionById.has(id)&&typeof note==='string'&&!candidate.notes[id])candidate.notes[id]=note.slice(0,10000);
       for(const [id,mark] of Object.entries(incoming.marks||{}))if(questionById.has(id.replace(/^(public|past)\|/,''))&&mark&&Number.isFinite(mark.updated)&&(!candidate.marks[id]||candidate.marks[id].updated<mark.updated))candidate.marks[id]=mark;
       for(const [id,card] of Object.entries(incoming.cards||{}))if(conceptById.has(id)&&card&&Number.isFinite(card.updated)&&(!candidate.cards[id]||candidate.cards[id].updated<card.updated))candidate.cards[id]=card;
@@ -546,6 +569,10 @@
     const action=target.dataset.action;const id=target.dataset.id;const value=target.dataset.value;
     switch(action) {
       case 'close-modal':closeModal();break;
+      case 'notebook-toggle':state.ui.notebookOpen=!state.ui.notebookOpen;save();render();break;
+      case 'notebook-close':state.ui.notebookOpen=false;save();render();break;
+      case 'notebook-all':navigate('notebook');break;
+      case 'notebook-back':navigate(practiceRoute(state.study.bank));break;
       case 'ask-ai':clearTimeout(nextQuestionTimer);window.ICT_TUTOR?.open(questionById.get(id),openModal);break;
       case 'search':openSearch();break;
       case 'public-view':state.ui.publicView=value;save();render();break;
@@ -689,7 +716,15 @@
     moveQuestion(swipe.index+(horizontal<0?1:-1));
   });
   document.addEventListener('pointercancel',()=>{questionSwipe=null;});
-  document.addEventListener('input',event=>{if(event.target.id==='global-search')searchAll(event.target.value);});
+  document.addEventListener('input',event=>{
+    if(event.target.id==='global-search')searchAll(event.target.value);
+    if(event.target.id==='learning-notebook'){
+      state.notebook=event.target.value;
+      const saved=save();
+      const status=document.getElementById('notebook-status');
+      if(status)status.textContent=saved?'已保存':'保存失败，请导出备份';
+    }
+  });
   document.addEventListener('change',event=>{
     const target=event.target;
     switch(target.id){

@@ -432,3 +432,38 @@ select { min-height: 41px; border: 1px solid var(--line); border-radius: 8px; ba
 }
 
 .ai-tutor .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.learning-notebook { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.notebook-heading { display: flex; align-items: center; gap: 8px; flex: none; }
+.notebook-heading h2 { font-size: 15px; }
+.notebook-heading .icon-btn { width: 30px; height: 30px; }
+#learning-notebook { width: 100%; min-height: 80px; flex: 1; resize: none; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 16px; line-height: 1.65; background: #fcfefd; }
+.notebook-page #learning-notebook { height: 48dvh; flex: none; resize: vertical; }
+.notebook-question-notes { display: grid; gap: 12px; margin-top: 16px; }
+.notebook-note { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.notebook-question-link { padding: 0; text-align: left; font-size: 14px; line-height: 1.6; color: var(--green); }
+.notebook-note p { margin-top: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+body.notebook-open { overflow: hidden; }
+.notebook-open #main { display: flex; flex-direction: column; height: calc(100dvh - 72px); min-height: 0; max-width: 1240px; padding-bottom: 14px; }
+.notebook-open .study-top { flex: none; }
+.notebook-open .study-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; flex: 1; min-height: 0; }
+.notebook-open .study-question-column { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.notebook-open .study-question-pane { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 3px; }
+.notebook-open .question-footer { position: static; margin: 0; padding: 8px 2px; flex: none; }
+@media(max-width: 700px) {
+ .notebook-open #main { height: calc(100dvh - 54px - 53px - env(safe-area-inset-bottom)); padding: 8px 12px; }
+ .notebook-open.memory-study #main { height: calc(100dvh - 53px - env(safe-area-inset-bottom)); }
+ .notebook-open .study-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(100px, 1fr) clamp(150px, 29dvh, 250px); gap: 8px; }
+ .notebook-open .learning-notebook { padding: 8px 10px; gap: 4px; }
+ .notebook-open .notebook-heading h2 { font-size: 13px; }
+ .notebook-open .notebook-heading .text-btn { min-height: 28px; }
+ .notebook-open .question-footer .btn { min-height: 34px; padding: 5px 10px; }
+ .notebook-open .question-footer .icon-btn { height: 34px; }
+ .notebook-open .study-top { padding-bottom: 6px; }
+ .notebook-open .toolbar { gap: 3px; }
+ .notebook-open .toolbar > .icon-btn { width: 28px; height: 30px; }
+}
+
+.notebook-page .notebook-heading { display: none; }
+
+.notebook-toggle { font-size: 12px; min-width: 30px; flex: none; }
